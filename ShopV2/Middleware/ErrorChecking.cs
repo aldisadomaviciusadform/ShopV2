@@ -45,7 +45,7 @@ public class ErrorChecking
                     message = "Argument is incorrect";
                     statusCode = StatusCodes.Status400BadRequest;
                     break;
-                case EntityNotFoundException:
+                case NotFoundException:
                     message = "Entity not found";
                     statusCode = StatusCodes.Status404NotFound;
                     break;

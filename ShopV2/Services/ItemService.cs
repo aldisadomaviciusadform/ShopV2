@@ -3,102 +3,96 @@ using ShopV2.Interfaces;
 using ShopV2.Objects.DTO;
 using ShopV2.Objects.Entities;
 
-namespace ShopV2.Services
+namespace ShopV2.Services;
+
+public class ItemService : IItemService
 {
-    public class ItemService : IItemService
+    private readonly IItemRepository _itemRepository;
+
+    public ItemService(IItemRepository itemRepository)
     {
-        private readonly IItemRepository _itemRepository;
+        _itemRepository = itemRepository;
+    }
 
-        public ItemService(IItemRepository itemRepository)
+    public async Task<ItemDto> Get(Guid id)
+    {
+        ItemEntity item = await _itemRepository.Get(id) ?? throw new NotFoundException("Item not found in DB");
+
+        ItemDto itemDto = new()
         {
-            _itemRepository = itemRepository;
-        }
+            Id = id,
+            Name = item.Name,
+            Price = item.Price,
+        };
 
-        public async Task<ItemDto> GetItemById(Guid id)
+        return itemDto;
+    }
+
+    public async Task<List<ItemDto>> Get()
+    {
+        List<ItemDto> items = [];
+        IEnumerable<ItemEntity> itemEntities = await _itemRepository.Get() ?? throw new NotFoundException("Item not found in DB");
+
+        items = itemEntities.Select(i => new ItemDto()
         {
-            ItemEntity item = await _itemRepository.Get(id) ?? throw new EntityNotFoundException("Item not found in DB");
+            Id = i.Id,
+            Name = i.Name,
+            Price = i.Price,
+        }).ToList();
 
-            ItemDto itemDto = new()
-            {
-                Id = id,
-                Name = item.Name,
-                Price = item.Price,
-            };
+        return items;
+    }
 
-            return itemDto;
-        }
-
-        public async Task<List<ItemDto>> GetItems()
+    public async Task<Guid> Add(ItemAddDto item)
+    {
+        ItemEntity itemEntity = new()
         {
-            List<ItemDto> items = [];
-            IEnumerable<ItemEntity> itemEntities = await _itemRepository.Get();
+            Name = item.Name,
+            Price = item.Price,
+        };
 
-            if (itemEntities == null)
-                throw new EntityNotFoundException("Item not found in DB");
+        return await _itemRepository.Add(itemEntity);
+    }
 
-            items = itemEntities.Select(i => new ItemDto()
-            {
-                Id = i.Id,
-                Name = i.Name,
-                Price = i.Price,
-            }).ToList();
+    public async Task Update(Guid id, ItemAddDto item)
+    {
+        await Get(id);
 
-            return items;
-        }
-
-        public async Task<Guid> AddItem(ItemAddDto item)
+        ItemEntity itemEntity = new()
         {
-            ItemEntity itemEntity = new()
-            {
-                Name = item.Name,
-                Price = item.Price,
-            };
+            Id = id,
+            Name = item.Name,
+            Price = item.Price,
+        };
 
-            return await _itemRepository.AddItem(itemEntity);
-        }
+        int result = await _itemRepository.Update(itemEntity);
 
-        public async Task UpdateItem(Guid id, ItemAddDto item)
-        {
-            await GetItemById(id);
+        if (result > 1)
+            throw new InvalidOperationException("Update was performed on multiple rows");
+    }
 
-            ItemEntity itemEntity = new()
-            {
-                Id = id,
-                Name = item.Name,
-                Price = item.Price,
-            };
+    public async Task Delete(Guid id)
+    {
+        await Get(id);
 
-            int result = await _itemRepository.UpdateItem(itemEntity);
+        await _itemRepository.Delete(id);
+    }
 
-            if (result == 0)
-                throw new EntityNotFoundException("Item not found in DB");
-            else if (result > 1)
-                throw new InvalidOperationException("Update was performed on multiple rows");
-        }
+    public async Task<decimal> Buy(Guid id, int quantity)
+    {
+        if (quantity <= 0)
+            throw new ArgumentException("Amount must be more than 0");
 
-        public async Task DeleteItem(Guid id)
-        {
-            ItemDto items = await GetItemById(id);
+        decimal netAmount;
+        if (quantity > 20)
+            netAmount = 0.8m;
+        else if (quantity > 10)
+            netAmount = 0.9m;
+        else
+            netAmount = 1.0m;
 
-            await _itemRepository.DeleteItem(id);
-        }
+        ItemDto items = await Get(id);
 
-        public async Task<decimal> BuyItem(Guid id, int quantity)
-        {
-            if (quantity <= 0)
-                throw new ArgumentException("Amount must be more than 0");
-
-            decimal netAmount;
-            if (quantity > 20)
-                netAmount = 0.8m;
-            else if (quantity > 10)
-                netAmount = 0.9m;
-            else
-                netAmount = 1.0m;
-
-            ItemDto items = await GetItemById(id);
-
-            return quantity * items.Price * netAmount;
-        }
+        return quantity * items.Price * netAmount;
     }
 }

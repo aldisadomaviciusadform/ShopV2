@@ -29,13 +29,14 @@ public class Program
 
         //inject DataContext
         //        builder.Services.AddDbContext<DataContext>(sp => sp.UseInMemoryDatabase("MyDatabase"));
-        builder.Services.AddDbContext<DataContext>(sp =>sp.UseNpgsql(new NpgsqlConnection(dbConnectionString)));
+        builder.Services.AddDbContext<DataContext>(sp => sp.UseNpgsql(new NpgsqlConnection(dbConnectionString)));
 
         //inject Services
         builder.Services.AddScoped<IItemService, ItemService>();
 
         //inject Repository
-        builder.Services.AddScoped<IItemRepository, ItemRepositoryEFInMemory>();
+//        builder.Services.AddScoped<IItemRepository, ItemRepositoryEFInMemory>();
+        builder.Services.AddScoped<IItemRepository, ItemRepositoryPostgre>();
 
         //change logger
         builder.Logging.ClearProviders();

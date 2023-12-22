@@ -18,40 +18,40 @@ public class ItemController : ControllerBase
     [HttpGet("{id}")]
     public async Task<IActionResult> GetItemById(Guid id)
     {
-        return Ok(await _itemService.GetItemById(id));
+        return Ok(await _itemService.Get(id));
     }
 
     [HttpGet]
     public async Task<IActionResult> GetItems()
     {
-        return Ok(await _itemService.GetItems());
+        return Ok(await _itemService.Get());
     }
 
     [HttpPost]
     public async Task<IActionResult> AddItem(ItemAddDto item)
     {
-        Guid guid = await _itemService.AddItem(item);
+        Guid guid = await _itemService.Add(item);
         return CreatedAtAction(nameof(GetItemById), new { Id = guid }, item);
     }
 
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateItem(Guid id, ItemAddDto _item)
     {
-        await _itemService.UpdateItem(id, _item);
+        await _itemService.Update(id, _item);
         return Ok();
     }
 
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteItem(Guid id)
     {
-        await _itemService.DeleteItem(id);
+        await _itemService.Delete(id);
         return Ok();
     }
 
     [HttpPost("{id}/Buy")]
     public async Task<IActionResult> BuyItem(Guid id, int quantity)
     {
-        decimal price = await _itemService.BuyItem(id, quantity);
+        decimal price = await _itemService.Buy(id, quantity);
         return Ok(new { Price = price });
     }
 }

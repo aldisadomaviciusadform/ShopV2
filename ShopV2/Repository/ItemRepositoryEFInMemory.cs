@@ -16,22 +16,22 @@ public class ItemRepositoryEFInMemory : DbContext, IItemRepository
 
     public async Task<ItemEntity?> Get(Guid id)
     {
-        return await _dataContext.Items.SingleAsync(t => t.Id == id && t.IsDeleted == false);
+        return await _dataContext.Items.SingleAsync(t => t.Id == id && !t.IsDeleted);
     }
 
     public async Task<IEnumerable<ItemEntity>> Get()
     {
-        return await _dataContext.Items.Where(t => t.IsDeleted == false).ToListAsync();
+        return await _dataContext.Items.Where(t => !t.IsDeleted).ToListAsync();
     }
 
-    public async Task<Guid> AddItem(ItemEntity item)
+    public async Task<Guid> Add(ItemEntity item)
     {
         await _dataContext.Items.AddAsync(item);
         await _dataContext.SaveChangesAsync();
         return item.Id;
     }
 
-    public async Task<int> UpdateItem(ItemEntity item)
+    public async Task<int> Update(ItemEntity item)
     {
         ItemEntity? editItem = await _dataContext.Items.FindAsync(item.Id);
 
@@ -44,7 +44,7 @@ public class ItemRepositoryEFInMemory : DbContext, IItemRepository
         return await _dataContext.SaveChangesAsync();
     }
 
-    public async Task DeleteItem(Guid id)
+    public async Task Delete(Guid id)
     {
         ItemEntity? editItem = await _dataContext.Items.FindAsync(id);
 
