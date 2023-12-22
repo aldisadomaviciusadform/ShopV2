@@ -35,7 +35,7 @@ public class Program
         builder.Services.AddScoped<IItemService, ItemService>();
 
         //inject Repository
-//        builder.Services.AddScoped<IItemRepository, ItemRepositoryEFInMemory>();
+        //        builder.Services.AddScoped<IItemRepository, ItemRepositoryEFInMemory>();
         builder.Services.AddScoped<IItemRepository, ItemRepositoryPostgre>();
 
         //change logger

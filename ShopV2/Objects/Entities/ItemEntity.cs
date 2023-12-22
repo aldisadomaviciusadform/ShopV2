@@ -3,7 +3,7 @@
 namespace ShopV2.Objects.Entities;
 
 //[Table("items")]
-public class ItemEntity:BaseEntity
+public class ItemEntity : BaseEntity
 {
     [Column("id")]
     public Guid Id { get; set; }

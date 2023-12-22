@@ -10,13 +10,13 @@ namespace ShopV2.Objects.Entities
         [Column("createdBy")]
         public string CreatedBy { get; set; } = string.Empty;
 
-        [Column("isDeleted")]
-        public bool IsDeleted { get; set; }
-
         [Column("modified")]
         public DateTime? Modified { get; set; }
 
         [Column("modifiedBy")]
         public string? ModifiedBy { get; set; }
+
+        [Column("isDeleted")]
+        public bool IsDeleted { get; set; }
     }
 }

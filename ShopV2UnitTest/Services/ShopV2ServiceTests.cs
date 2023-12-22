@@ -1,43 +1,38 @@
-﻿using FluentAssertions;
+﻿using AutoFixture.Xunit2;
+using FluentAssertions;
 using Moq;
 using ShopV2.Exceptions;
 using ShopV2.Interfaces;
 using ShopV2.Objects.DTO;
 using ShopV2.Objects.Entities;
-using ShopV2.Repository;
 using ShopV2.Services;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ShopV2UnitTest.Services;
 
 public class ShopV2ServiceTests
 {
+
+    private readonly Mock<IItemRepository> _itemRepositoryMock;
+    private readonly ItemService _itemService;
+
+    public ShopV2ServiceTests()
+    {
+        _itemRepositoryMock = new Mock<IItemRepository>();
+        _itemService = new ItemService(_itemRepositoryMock.Object);
+    }
+
+    // naudot verify
+    // naudot autodata is autofixture
     [Theory]
-    [InlineData("7b685ea3-4a94-4c2a-8ee7-dfe8b1b407c1")]
-    [InlineData("e4fc2fb7-2d52-482c-a5eb-b9a50df09e6e")]
-    [InlineData("a1475dd7-f8f9-4b16-8917-c2a64d76a4e4")]
-    [InlineData("1e7a76bb-3b91-4eef-9ab5-ae991d558442")]
-    [InlineData("fcdfedf4-bb79-4e29-8e22-d399a27f927d")]
-    [InlineData("41aa94c9-aa14-4d90-8622-628b778f15e3")]
-    [InlineData("c715fbcf-6c3f-4c4d-a4d5-754a06d3d189")]
-    [InlineData("5a4b2cf3-c80a-4e87-8e50-cd8d117f22a9")]
-    [InlineData("dc59a1e7-1949-4f0f-b13c-96ce0d12e2b5")]
-    [InlineData("7f64e01e-82d5-41cc-8707-8eeff43e550d")]
+    [AutoData]
     public async Task Getid_GivenValidId_ReturnsDTO(Guid id)
     {
         //Arrange
-        var itemRepository = new Mock<IItemRepository>();
-        itemRepository.Setup(m => m.Get(id))
+        _itemRepositoryMock.Setup(m => m.Get(id))
                         .ReturnsAsync(new ItemEntity { Id = id });
 
-        ItemService itemService = new (itemRepository.Object);
-
         //Act
-        ItemDto result = await itemService.Get(id);
+        ItemDto result = await _itemService.Get(id);
 
         //Assert
         result.Id.Should().Be(id);
@@ -45,141 +40,162 @@ public class ShopV2ServiceTests
 
     [Fact]
     public async Task Getid_GivenInvalidId_ThrowNotFoundException()
-    {        
+    {
         // Arrange
         Guid id = new();
-        var itemRepository = new Mock<IItemRepository>();
-        itemRepository.Setup(m => m.Get(id))
+
+        _itemRepositoryMock.Setup(m => m.Get(id))
                         .Returns(Task.FromResult<ItemEntity?>(null));
 
-        ItemService itemService = new (itemRepository.Object);
-
         // Act Assert
-        await Assert.ThrowsAsync<NotFoundException>(async () => await itemService.Get(id));
+        await Assert.ThrowsAsync<NotFoundException>(async () => await _itemService.Get(id));
     }
 
     [Fact]
     public async Task Get_GivenValidId_ReturnsDTO()
     {
         //Arrange
-        var itemRepository = new Mock<IItemRepository>();
-        itemRepository.Setup(m => m.Get())
-                        .ReturnsAsync(new List<ItemEntity> 
-                        { 
+        _itemRepositoryMock.Setup(m => m.Get())
+                        .ReturnsAsync(new List<ItemEntity>
+                        {
                             new ItemEntity {Id = new Guid()},
                             new ItemEntity {Id = new Guid()}
                         });
 
-        ItemService itemService = new(itemRepository.Object);
-
         //Act
-        var result = await itemService.Get();
+        var result = await _itemService.Get();
 
         //Assert
         result.Count.Should().Be(2);
     }
 
     [Fact]
-    public async Task Get_GivenInvalidId_ThrowNotFoundException()
+    public async Task Get_GivenNull_ThrowNotFoundException()
     {
         // Arrange
-        var itemRepository = new Mock<IItemRepository>();
-        itemRepository.Setup(m => m.Get())
+        _itemRepositoryMock.Setup(m => m.Get())
                         .Returns(Task.FromResult<IEnumerable<ItemEntity>>(null!));
 
-        ItemService itemService = new (itemRepository.Object);
-
         // Act Assert
-        await itemService.Invoking(x => x.Get())
+        await _itemService.Invoking(x => x.Get())
                     .Should().ThrowAsync<NotFoundException>();
 
-//        await Assert.ThrowsAsync<NotFoundException>(async () => await itemService.Get());
+        //        await Assert.ThrowsAsync<NotFoundException>(async () => await itemService.Get());
     }
 
     [Theory]
-    [InlineData("7b685ea3-4a94-4c2a-8ee7-dfe8b1b407c1")]
-    [InlineData("e4fc2fb7-2d52-482c-a5eb-b9a50df09e6e")]
-    [InlineData("a1475dd7-f8f9-4b16-8917-c2a64d76a4e4")]
-    [InlineData("1e7a76bb-3b91-4eef-9ab5-ae991d558442")]
-    [InlineData("fcdfedf4-bb79-4e29-8e22-d399a27f927d")]
-    [InlineData("41aa94c9-aa14-4d90-8622-628b778f15e3")]
-    [InlineData("c715fbcf-6c3f-4c4d-a4d5-754a06d3d189")]
-    [InlineData("5a4b2cf3-c80a-4e87-8e50-cd8d117f22a9")]
-    [InlineData("dc59a1e7-1949-4f0f-b13c-96ce0d12e2b5")]
-    [InlineData("7f64e01e-82d5-41cc-8707-8eeff43e550d")]
-    public async Task Add_GivenValidId_ReturnsGuid(Guid id)
+    [AutoData]
+    public async Task Add_GivenValidId_ReturnsGuid(Guid id, string name, decimal price)
     {
         //Arrange
-        var itemRepository = new Mock<IItemRepository>();
-        itemRepository.Setup(m => m.Add(It.IsAny<ItemEntity>()))
-                        .ReturnsAsync(id);
-
-        ItemService itemService = new(itemRepository.Object);
+        _itemRepositoryMock.Setup(m => m.Add(It.Is<ItemEntity>
+                                (x => x.Name == name && x.Price == price && x.IsDeleted == false)))
+                                 .ReturnsAsync(id);
 
         //Act
-        Guid result = await itemService.Add(new ItemAddDto {Name = "aa", Price = 5});
+        Guid result = await _itemService.Add(new ItemAddDto { Name = name, Price = price });
 
         //Assert
         result.Should().Be(id);
     }
 
     [Theory]
-    [InlineData("7b685ea3-4a94-4c2a-8ee7-dfe8b1b407c1", "aa", 5.5)]
-    [InlineData("e4fc2fb7-2d52-482c-a5eb-b9a50df09e6e", "aab", 5.5)]
-    [InlineData("a1475dd7-f8f9-4b16-8917-c2a64d76a4e4", "aad", 5.5)]
-    [InlineData("1e7a76bb-3b91-4eef-9ab5-ae991d558442", "aaq", 5.5)]
-    [InlineData("fcdfedf4-bb79-4e29-8e22-d399a27f927d", "aaer", 5.5)]
-    [InlineData("41aa94c9-aa14-4d90-8622-628b778f15e3", "auoia", 5.5)]
-    [InlineData("c715fbcf-6c3f-4c4d-a4d5-754a06d3d189", "apa", 5.5)]
-    [InlineData("5a4b2cf3-c80a-4e87-8e50-cd8d117f22a9", "aabnn", 5.5)]
-    [InlineData("dc59a1e7-1949-4f0f-b13c-96ce0d12e2b5", "aahkui", 5.5)]
-    [InlineData("7f64e01e-82d5-41cc-8707-8eeff43e550d", "aauuq", 5.5)]
+    [AutoData]
     public async Task Update_ReturnsSucces(Guid id, string name, decimal price)
     {
         //Arrange
-        var itemRepository = new Mock<IItemRepository>();
-        itemRepository.Setup(m => m.Update(It.IsAny<ItemEntity>()))
-                             .ReturnsAsync(1);
+        _itemRepositoryMock.Setup(m => m.Update(It.Is<ItemEntity>
+                                (x => x.Id == id && x.Name == name && x.Price == price)))
+                                .ReturnsAsync(1);
 
-        itemRepository.Setup(m => m.Get(id))
-                             .ReturnsAsync(new ItemEntity {Id = id });
-
-        ItemService itemService = new(itemRepository.Object);
+        _itemRepositoryMock.Setup(m => m.Get(id))
+                                .ReturnsAsync(new ItemEntity
+                                { Id = id, Name = name, Price = price, IsDeleted = false });
 
         //Act
         //Assert
-        await itemService.Invoking(x=> x.Update(id, new ItemAddDto { Name = name, Price = price }))
-                            .Should().NotThrowAsync<Exception>();
+        await _itemService.Invoking(x => x.Update(id, new ItemAddDto
+        { Name = name, Price = price }))
+                                        .Should().NotThrowAsync<Exception>();
     }
 
     [Fact]
-    public async Task Update_Invalid_NotFoundException()
+    public async Task Update_Invalid_InvalidOperationException()
     {
         Guid id = new Guid();
         string name = "name";
         decimal price = 5.98m;
 
         //Arrange
-        var itemRepository = new Mock<IItemRepository>();
-        itemRepository.Setup(m => m.Update(It.IsAny<ItemEntity>()))
-                             .ReturnsAsync(2);
+        _itemRepositoryMock.Setup(m => m.Update(It.Is<ItemEntity>
+                                (x => x.Id == id && x.Name == name && x.Price == price)))
+                                .ReturnsAsync(2);
 
-        itemRepository.Setup(m => m.Get(id))
+        _itemRepositoryMock.Setup(m => m.Get(id))
                              .ReturnsAsync(new ItemEntity { Id = id });
-
-        ItemService itemService = new(itemRepository.Object);
 
         //Act
         //Assert
-        await itemService.Invoking(x => x.Update(id, new ItemAddDto { Name = name, Price = price }))
+        await _itemService.Invoking(x => x.Update(id, new ItemAddDto { Name = name, Price = price }))
                             .Should().ThrowAsync<InvalidOperationException>();
     }
 
-    public async Task Delete(Guid id)
+    [Fact]
+    public async Task Update_InvalidId_InvalidOperationException()
     {
-        //await Assert.NotSame<NotFoundException>(async () => await itemService.Update(id, new ItemAddDto { Name = "aa", Price = 5 }));
+        Guid id = new Guid();
+        string name = "name";
+        decimal price = 5.98m;
+
+        //Arrange
+        _itemRepositoryMock.Setup(m => m.Update(It.Is<ItemEntity>
+                                (x => x.Id == id && x.Name == name && x.Price == price)))
+                                .ReturnsAsync(1);
+
+        _itemRepositoryMock.Setup(m => m.Get(id))
+                        .Returns(Task.FromResult<ItemEntity?>(null));
+
+        //Act
+        //Assert
+        await _itemService.Invoking(x => x.Update(id, new ItemAddDto { Name = name, Price = price }))
+                            .Should().ThrowAsync<NotFoundException>();
     }
+
+    [Fact]
+    public async Task Delete_ValidId()
+    {
+        Guid id = new Guid();
+
+        //Arrange
+        _itemRepositoryMock.Setup(m => m.Delete(id));
+
+        _itemRepositoryMock.Setup(m => m.Get(id))
+                        .Returns(Task.FromResult(new ItemEntity { Id = id })!);
+
+        //Act
+        //Assert
+        await _itemService.Invoking(x => x.Delete(id))
+                            .Should().NotThrowAsync<NotFoundException>();
+    }
+
+    [Fact]
+    public async Task Delete_InvalidId_ThrowNotFoundException()
+    {
+        Guid id = new Guid();
+
+        //Arrange
+        _itemRepositoryMock.Setup(m => m.Delete(id));
+
+        _itemRepositoryMock.Setup(m => m.Get(id))
+                        .Returns(Task.FromResult<ItemEntity?>(null));
+
+        //Act
+        //Assert
+        await _itemService.Invoking(x => x.Delete(id))
+                            .Should().ThrowAsync<NotFoundException>();
+    }
+
     public async Task Buy(Guid id, int quantity)
-    { 
+    {
     }
 }
